@@ -41,7 +41,6 @@ def	*	11	mult11 {inst}(clk, {inputs}, {output});	[31:0]
 def	+	14	add14 {inst}(clk, {inputs}, {output});	[31:0]
 def	-	14	sub14 {inst}(clk, {inputs}, {output});	[31:0]
 
-
 ```
 
 ## into this:
@@ -123,6 +122,5 @@ always @(posedge clk) begin
 end
 
 endmodule
-
 
 ```

@@ -2,8 +2,7 @@ changequote('{{{', '}}}'
 )# Automatically turns this:
 
 ```
-esyscmd(grep -hv ^inc ln_core.txt ln_fast_core.txt)
-```
+esyscmd(grep -hv ^inc ln_core.txt ln_fast_core.txt)```
 
 ## into this:
 
@@ -12,5 +11,4 @@ esyscmd(grep -hv ^inc ln_core.txt ln_fast_core.txt)
 ## and this:
 
 ```
-include(ln_fast_core.v)
-```
+include(ln_fast_core.v)```
