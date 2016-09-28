@@ -45,7 +45,7 @@ inst	+	ln	s1234	t5
 
 ## into this:
 
-![design heirarchy](ln_fast_core.png)
+![design heirarchy](examples/ln_fast_core.png)
 
 ## and this:
 

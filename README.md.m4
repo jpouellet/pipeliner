@@ -2,13 +2,13 @@ changequote('{{{', '}}}'
 )# Automatically turns this:
 
 ```
-esyscmd(grep -hv ^inc ln_fast_core.txt ln_core.txt)```
+esyscmd(grep -hv ^inc examples/ln_fast_core.txt examples/ln_core.txt)```
 
 ## into this:
 
-![design heirarchy](ln_fast_core.png)
+![design heirarchy](examples/ln_fast_core.png)
 
 ## and this:
 
 ```
-include(ln_fast_core.v)```
+include(examples/ln_fast_core.v)```
