@@ -30,6 +30,7 @@ class Val:
 class Pipeline:
     name = None
     clock = None
+    rst_n = None
     ops = {}
     inputs = []
     outputs = []
@@ -39,47 +40,65 @@ class Pipeline:
     ports = []
     port_widths = {}
 
-    def __init__(self, descr):
-        for line in descr:
-            t = line.strip().split('\t')
-            if t[0] == 'm': # module name
-                if self.name is not None:
-                    raise Exception('duplicate name: '+t[1])
-                self.name = t[1]
-            elif t[0] == 'c': # clock
-                if self.clock is not None:
-                    raise Exception('2nd clock: '+t[1])
-                self.clock = t[1]
-                self.ports.append(t[1])
-                self.port_widths[t[1]] = None
-            elif t[0] == 'C': # constant
-                # C   name   32'hdeadbeef
-                if t[1] in self.consts:
-                    raise Exception('duplicate constant: '+t[1])
-                self.consts[t[1]] = t[2]
-            elif t[0] == 'i': # inputs
-                if t[1] in self.ports:
-                    raise Exception('duplicate port: '+t[1])
-                self.inputs.append(t[1])
-                self.ports.append(t[1])
-                self.port_widths[t[1]] = t[2] if len(t) >= 3 else None
-            elif t[0] == 'o': # outputs
-                if t[1] in self.ports:
-                    raise Exception('duplicate port: '+t[1])
-                self.outputs.append(t[1])
-                self.ports.append(t[1])
-                self.port_widths[t[1]] = t[2] if len(t) >= 3 else None
-            elif t[0] == 'd': # definition
-                # d   name   cycles   fmt %str
-                if t[1] in self.ops:
-                    raise Exception('duplicate definition: '+t[1])
-                self.ops[t[1]] = Op(t[1], int(t[2]), t[3], t[4] if len(t) >= 5 else None)
-            elif t[0] == '=': # inst
-                # =   name   output   width    input1   input2 ...
-                if t[1] not in self.ops:
-                    raise Exception('undefined op: '+inst.op)
-                self.insts.append(Inst(self.ops[t[1]], t[2], t[3:]))
+    def __init__(self, fname):
+        self.add_file(fname)
+        self.process()
 
+    def add_file(self, fname):
+        with open(fname, 'r') as f:
+            for line in f:
+                l = line.strip()
+                t = line.strip().split('\t')
+                if l == '' or t[0].startswith('#'): # comment
+                    continue
+                self.add(t)
+
+    def add(self, t):
+        if t[0] == 'mod': # module name
+            if self.name is not None:
+                raise Exception('duplicate name: '+t[1])
+            self.name = t[1]
+        elif t[0] == 'clk': # clock
+            if self.clock is not None:
+                raise Exception('2nd clock: '+t[1])
+            self.clock = t[1]
+            self.ports.append(t[1])
+            self.port_widths[t[1]] = None
+        elif t[0] == 'rst_n': # active-low synchronous reset
+            self.rst_n = t[1]
+        elif t[0] == 'const': # constant
+            # const   name   32'hdeadbeef
+            if t[1] in self.consts:
+                raise Exception('duplicate constant: '+t[1])
+            self.consts[t[1]] = t[2]
+        elif t[0] == 'in': # inputs
+            if t[1] in self.ports:
+                raise Exception('duplicate port: '+t[1])
+            self.inputs.append(t[1])
+            self.ports.append(t[1])
+            self.port_widths[t[1]] = t[2] if len(t) >= 3 else None
+        elif t[0] == 'out': # outputs
+            if t[1] in self.ports:
+                raise Exception('duplicate port: '+t[1])
+            self.outputs.append(t[1])
+            self.ports.append(t[1])
+            self.port_widths[t[1]] = t[2] if len(t) >= 3 else None
+        elif t[0] == 'def': # definition
+            # def   name   cycles   fmt %str
+            if t[1] in self.ops:
+                raise Exception('duplicate definition: '+t[1])
+            self.ops[t[1]] = Op(t[1], int(t[2]), t[3], t[4] if len(t) >= 5 else None)
+        elif t[0] == 'inst': # instance
+            # inst   name   output   width    input1   input2 ...
+            if t[1] not in self.ops:
+                raise Exception('undefined op: '+inst.op)
+            self.insts.append(Inst(self.ops[t[1]], t[2], t[3:]))
+        elif t[0] == 'inc': # include other file
+            self.add_file(t[1])
+        else:
+            raise Exception('invalid token: '+t[0])
+
+    def process(self):
         # ensure module has name and clock
         if self.name is None:
             raise Exception('module has no name')
@@ -107,7 +126,7 @@ class Pipeline:
 
         # ensure all outputs exist
         for output in self.outputs:
-            if output not in self.vals:
+            if output not in self.vals.keys() + self.consts.keys():
                 raise Exception('undefined output: '+output)
 
         # ensure all values (including module inputs and constants) go somewhere
@@ -144,8 +163,8 @@ class Pipeline:
         return '\n'.join('%s %d:%d'%x for x in times)
 
     def graphviz(self):
-        nodes = ['\t"%s" [label="%s"]'%(inst.output, inst.op.name) for inst in self.insts]
-        nodes += ['\t"%s" [label="%s"]'%(c, '%s\n(%s)'%(c, self.consts[c])) for c in self.consts]
+        nodes = ['\t"%s" [label="%s"]'%(c, '%s\n(%s)'%(c, self.consts[c])) for c in self.consts]
+        nodes += ['\t"%s" [label="%s"]'%(inst.output, '%s\n(%d-%d)'%(inst.op.name, inst.start, self.vals[inst.output].ready)) for inst in self.insts]
         edges = []
         for to in self.insts:
             for f in to.inputs:
@@ -167,6 +186,9 @@ class Pipeline:
         return ''
 
     def verilog(self):
+        # info
+        info = '// %d-cycle %s'%(self.cycles, self.name)
+
         # constants
         consts = ['`define %s %s'%(x, self.consts[x]) for x in self.consts]
 
@@ -185,7 +207,7 @@ class Pipeline:
             if regs:
                 vals.append('reg %s %s;'%(width, ', '.join(regs)))
             for i in xrange(val.ready+1, val.lastused+1):
-                bumps.append('%s_%d <= %s_%d;'%(val.name, i, val.name, i-1))
+                bumps.append(('%s_%d'%(val.name, i), '%s_%d'%(val.name, i-1)))
 
         # connect ports
         assigns = []
@@ -197,27 +219,34 @@ class Pipeline:
         # instances
         insts = []
         for inst in self.insts:
-            inputs = ', '.join([x if x in self.consts else '%s_%d'%(x, inst.start) for x in inst.inputs])
+            input_a = [x if x in self.consts else '%s_%d'%(x, inst.start) for x in inst.inputs]
+            inputs = ', '.join(input_a)
             output = '%s_%d'%(inst.output, inst.start + inst.op.cycles)
-            insts.append(inst.op.fmt.format(inst='u%d'%(len(insts)), output=output, inputs=inputs))
+            insts.append(inst.op.fmt.format(inst='u%d'%(len(insts)), output=output, inputs=inputs, input_a=input_a))
 
         # giant synchronous advancement
-        advance = '\n\t'.join(['always @(posedge '+self.clock+') begin']+bumps) + '\nend'
+        advance = ['always @(posedge %s) begin'%(self.clock)]
+        if self.rst_n is not None:
+            advance.append('\tif (~%s) begin'%self.rst_n)
+            advance.extend('\t\t%s <= 0;'%(x[0]) for x in bumps)
+            advance.append('\tend else begin')
+        advance.extend('\t\t%s <= %s;'%x for x in bumps)
+        if self.rst_n is not None:
+            advance.append('\tend')
+        advance.append('end')
 
-        return '\n\n'.join(['\n'.join(x) for x in [consts, [module], vals, assigns, insts, [advance], ['endmodule','']]])
+        return '\n\n'.join(['\n'.join(x) for x in [[info], consts, [module], vals, assigns, insts, advance, ['endmodule','']]])
 
 def usage():
     sys.stderr.write('Usage: %s pipeline_description_file [lifetimes|graphviz|verilog]\n'%(sys.argv[0]))
     sys.exit(1)
 
-with open(sys.argv[1], 'r') as f:
-    p = Pipeline(f)
-    if len(sys.argv) >= 3:
-        if sys.argv[2] == 'lifetimes':
-            print p.lifetimes()
-        elif sys.argv[2] == 'graphviz':
-            print p.graphviz()
-        elif sys.argv[2] == 'verilog':
-            print p.verilog()
-        else:
-            usage()
+p = Pipeline(sys.argv[2])
+if sys.argv[1] == 'lifetimes':
+    print p.lifetimes()
+elif sys.argv[1] == 'graphviz':
+    print p.graphviz()
+elif sys.argv[1] == 'verilog':
+    print p.verilog()
+else:
+    usage()

@@ -1,0 +1,34 @@
+const	one	32'h3f800000
+const	one_half	32'h3f000000
+const	one_third	32'h3eaaaaab
+const	one_fourth	32'h3e800000
+const	one_fifth	32'h3e4ccccd
+
+clk	clk
+rst_n	rst_n
+in	x	[31:0]
+in	start
+out	ln	[31:0]
+out	done
+out	error
+
+def	direct	0	assign {output} = {inputs};
+inst	direct	done	start
+
+def	abs	0	assign {output} = {{1'b0, {inputs}[30:0]}};
+def	gt	0	assign {output} = {input_a[0]} > {input_a[1]};
+inst	abs	x_abs	x
+inst	gt	error	x_abs	one
+
+inst	*	e2	x	x
+inst	*	t2	e2	one_half
+inst	*	e3	e2	x
+inst	*	e4	e2	e2
+inst	-	s12	x	t2
+inst	*	e5	e4	x
+inst	*	t3	e3	one_third
+inst	*	t4	e4	one_fourth
+inst	-	s34	t3	t4
+inst	*	t5	e5	one_fifth
+inst	+	s1234	s12	s34
+inst	+	ln	s1234	t5

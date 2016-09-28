@@ -1,0 +1,7 @@
+mod	ln_fast_core
+
+def	*	11	mult {inst}(clk, {inputs}, {output});
+def	+	14	add {inst}(clk, {inputs}, {output});
+def	-	14	sub {inst}(clk, {inputs}, {output});
+
+inc	ln_core.txt

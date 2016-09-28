@@ -1,0 +1,7 @@
+mod	ln_latency_core
+
+def	*	5	mult {inst}(clk, {inputs}, {output});
+def	+	7	add {inst}(clk, {inputs}, {output});
+def	-	7	sub {inst}(clk, {inputs}, {output});
+
+inc	ln_core.txt
