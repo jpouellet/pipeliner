@@ -3,7 +3,8 @@ specdeps=ln_core.txt pipeliner.py
 vs=$(specs:.txt=.v)
 gvs=$(specs:.txt=.gv)
 svgs=$(specs:.txt=.svg)
-targets=$(vs) $(gvs) $(svgs)
+pngs=$(specs:.txt=.png)
+targets=$(vs) $(gvs) $(svgs) $(pngs)
 
 all: $(targets)
 
@@ -18,3 +19,6 @@ clean:
 
 %.svg: %.gv
 	dot -Tsvg < $< > $@
+
+%.png: %.gv
+	dot -Tpng < $< > $@
