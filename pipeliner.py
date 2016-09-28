@@ -201,8 +201,9 @@ class Pipeline:
 
         # pipeline registers
         vals = []
-        bumps = []
+        allbumps = []
         for val in self.vals.itervalues():
+            bumps = []
             width = self.width(val.name)
             vals.append('wire %s %s_%d;'%(width, val.name, val.ready))
             regs = ['%s_%d'%(val.name, i) for i in xrange(val.ready+1, val.lastused+1)]
@@ -210,6 +211,7 @@ class Pipeline:
                 vals.append('reg %s %s;'%(width, ', '.join(regs)))
             for i in xrange(val.ready+1, val.lastused+1):
                 bumps.append(('%s_%d'%(val.name, i), '%s_%d'%(val.name, i-1)))
+            allbumps.append(bumps)
 
         # connect ports
         assigns = []
@@ -230,9 +232,11 @@ class Pipeline:
         advance = ['always @(posedge %s) begin'%(self.clock)]
         if self.rst_n is not None:
             advance.append('\tif (~%s) begin'%self.rst_n)
-            advance.extend('\t\t%s <= 0;'%(x[0]) for x in bumps)
+            for bumps in filter(lambda x: x, allbumps):
+                advance.append('\t\t'+' '.join('%s <= 0;'%(x[0]) for x in bumps))
             advance.append('\tend else begin')
-        advance.extend('\t\t%s <= %s;'%x for x in bumps)
+        for bumps in filter(lambda x: x, allbumps):
+            advance.append('\t\t'+' '.join('%s <= %s;'%x for x in bumps))
         if self.rst_n is not None:
             advance.append('\tend')
         advance.append('end')

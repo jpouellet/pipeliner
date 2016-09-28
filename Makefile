@@ -4,9 +4,12 @@ vs=$(specs:.txt=.v)
 gvs=$(specs:.txt=.gv)
 svgs=$(specs:.txt=.svg)
 pngs=$(specs:.txt=.png)
-targets=$(vs) $(gvs) $(svgs) $(pngs)
+targets=README.md $(vs) $(gvs) $(svgs) $(pngs)
 
 all: $(targets)
+
+README.md: README.md.m4 ln_fast_core.v
+	m4 < $< > $@
 
 clean:
 	rm -f $(targets)
