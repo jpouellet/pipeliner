@@ -2,7 +2,7 @@ changequote('{{{', '}}}'
 )# Automatically turns this:
 
 ```
-esyscmd(grep -v ^inc ln_core.txt ln_fast_core.txt)
+esyscmd(grep -hv ^inc ln_core.txt ln_fast_core.txt)
 ```
 
 ## into this:

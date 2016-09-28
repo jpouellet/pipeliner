@@ -1,46 +1,46 @@
 # Automatically turns this:
 
 ```
-ln_core.txt:const	ONE	32'h3f800000
-ln_core.txt:const	ONE_HALF	32'h3f000000
-ln_core.txt:const	ONE_THIRD	32'h3eaaaaab
-ln_core.txt:const	ONE_FOURTH	32'h3e800000
-ln_core.txt:const	ONE_FIFTH	32'h3e4ccccd
-ln_core.txt:
-ln_core.txt:clk	clk
-ln_core.txt:rst_n	rst_n
-ln_core.txt:in	x	[31:0]
-ln_core.txt:in	start
-ln_core.txt:out	ln	[31:0]
-ln_core.txt:out	done
-ln_core.txt:out	error
-ln_core.txt:
-ln_core.txt:def	buf32	0	assign {output} = {inputs};	[31:0]
-ln_core.txt:inst	buf32	done	start
-ln_core.txt:
-ln_core.txt:def	abs	0	assign {output} = {{1'b0, {inputs}[30:0]}};	[31:0]
-ln_core.txt:def	gt	0	assign {output} = {input_a[0]} > {input_a[1]};
-ln_core.txt:inst	abs	x_abs	x
-ln_core.txt:inst	gt	error	x_abs	ONE
-ln_core.txt:
-ln_core.txt:inst	*	e2	x	x
-ln_core.txt:inst	*	t2	e2	ONE_HALF
-ln_core.txt:inst	*	e3	e2	x
-ln_core.txt:inst	*	e4	e2	e2
-ln_core.txt:inst	-	s12	x	t2
-ln_core.txt:inst	*	e5	e4	x
-ln_core.txt:inst	*	t3	e3	ONE_THIRD
-ln_core.txt:inst	*	t4	e4	ONE_FOURTH
-ln_core.txt:inst	-	s34	t3	t4
-ln_core.txt:inst	*	t5	e5	ONE_FIFTH
-ln_core.txt:inst	+	s1234	s12	s34
-ln_core.txt:inst	+	ln	s1234	t5
-ln_fast_core.txt:mod	ln_fast_core
-ln_fast_core.txt:
-ln_fast_core.txt:def	*	11	mult11 {inst}(clk, {inputs}, {output});	[31:0]
-ln_fast_core.txt:def	+	14	add14 {inst}(clk, {inputs}, {output});	[31:0]
-ln_fast_core.txt:def	-	14	sub14 {inst}(clk, {inputs}, {output});	[31:0]
-ln_fast_core.txt:
+const	ONE	32'h3f800000
+const	ONE_HALF	32'h3f000000
+const	ONE_THIRD	32'h3eaaaaab
+const	ONE_FOURTH	32'h3e800000
+const	ONE_FIFTH	32'h3e4ccccd
+
+clk	clk
+rst_n	rst_n
+in	x	[31:0]
+in	start
+out	ln	[31:0]
+out	done
+out	error
+
+def	buf32	0	assign {output} = {inputs};	[31:0]
+inst	buf32	done	start
+
+def	abs	0	assign {output} = {{1'b0, {inputs}[30:0]}};	[31:0]
+def	gt	0	assign {output} = {input_a[0]} > {input_a[1]};
+inst	abs	x_abs	x
+inst	gt	error	x_abs	ONE
+
+inst	*	e2	x	x
+inst	*	t2	e2	ONE_HALF
+inst	*	e3	e2	x
+inst	*	e4	e2	e2
+inst	-	s12	x	t2
+inst	*	e5	e4	x
+inst	*	t3	e3	ONE_THIRD
+inst	*	t4	e4	ONE_FOURTH
+inst	-	s34	t3	t4
+inst	*	t5	e5	ONE_FIFTH
+inst	+	s1234	s12	s34
+inst	+	ln	s1234	t5
+mod	ln_fast_core
+
+def	*	11	mult11 {inst}(clk, {inputs}, {output});	[31:0]
+def	+	14	add14 {inst}(clk, {inputs}, {output});	[31:0]
+def	-	14	sub14 {inst}(clk, {inputs}, {output});	[31:0]
+
 
 ```
 
