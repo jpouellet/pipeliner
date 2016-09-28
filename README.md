@@ -1,6 +1,12 @@
 # Automatically turns this:
 
 ```
+mod	ln_fast_core
+
+def	*	11	mult11 {inst}(clk, {inputs}, {output});	[31:0]
+def	+	14	add14 {inst}(clk, {inputs}, {output});	[31:0]
+def	-	14	sub14 {inst}(clk, {inputs}, {output});	[31:0]
+
 const	ONE	32'h3f800000
 const	ONE_HALF	32'h3f000000
 const	ONE_THIRD	32'h3eaaaaab
@@ -35,12 +41,6 @@ inst	-	s34	t3	t4
 inst	*	t5	e5	ONE_FIFTH
 inst	+	s1234	s12	s34
 inst	+	ln	s1234	t5
-mod	ln_fast_core
-
-def	*	11	mult11 {inst}(clk, {inputs}, {output});	[31:0]
-def	+	14	add14 {inst}(clk, {inputs}, {output});	[31:0]
-def	-	14	sub14 {inst}(clk, {inputs}, {output});	[31:0]
-
 ```
 
 ## into this:
