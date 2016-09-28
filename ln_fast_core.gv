@@ -1,15 +1,18 @@
 digraph {
-	"one_half" [label="one_half
-(32'h3f000000)"]
-	"one_third" [label="one_third
-(32'h3eaaaaab)"]
-	"one_fifth" [label="one_fifth
-(32'h3e4ccccd)"]
-	"one_fourth" [label="one_fourth
-(32'h3e800000)"]
-	"one" [label="one
-(32'h3f800000)"]
-	"done" [label="direct
+	"ONE_HALF" [label="`ONE_HALF
+32'h3f000000"]
+	"ONE_THIRD" [label="`ONE_THIRD
+32'h3eaaaaab"]
+	"ONE_FOURTH" [label="`ONE_FOURTH
+32'h3e800000"]
+	"ONE_FIFTH" [label="`ONE_FIFTH
+32'h3e4ccccd"]
+	"ONE" [label="`ONE
+32'h3f800000"]
+	"ln output" [label="ln"]
+	"done output" [label="done"]
+	"error output" [label="error"]
+	"done" [label="buf32
 (0-0)"]
 	"x_abs" [label="abs
 (0-0)"]
@@ -42,11 +45,11 @@ digraph {
 	"start" -> "done";
 	"x" -> "x_abs";
 	"x_abs" -> "error";
-	"one" -> "error";
+	"ONE" -> "error";
 	"x" -> "e2";
 	"x" -> "e2";
 	"e2" -> "t2";
-	"one_half" -> "t2";
+	"ONE_HALF" -> "t2";
 	"e2" -> "e3";
 	"x" -> "e3" [label="11-cycle\ndelay", color=red];
 	"e2" -> "e4";
@@ -56,16 +59,19 @@ digraph {
 	"e4" -> "e5";
 	"x" -> "e5" [label="22-cycle\ndelay", color=red];
 	"e3" -> "t3";
-	"one_third" -> "t3";
+	"ONE_THIRD" -> "t3";
 	"e4" -> "t4";
-	"one_fourth" -> "t4";
+	"ONE_FOURTH" -> "t4";
 	"t3" -> "s34";
 	"t4" -> "s34";
 	"e5" -> "t5";
-	"one_fifth" -> "t5";
+	"ONE_FIFTH" -> "t5";
 	"s12" -> "s1234" [label="11-cycle\ndelay", color=red];
 	"s34" -> "s1234";
 	"s1234" -> "ln";
 	"t5" -> "ln" [label="17-cycle\ndelay", color=red];
+	"ln" -> "ln output";
+	"done" -> "done output" [label="75-cycle\ndelay", color=red];
+	"error" -> "error output" [label="75-cycle\ndelay", color=red];
 }
 

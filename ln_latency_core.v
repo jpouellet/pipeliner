@@ -1,35 +1,35 @@
 // 36-cycle ln_latency_core
 
-`define one_half 32'h3f000000
-`define one_third 32'h3eaaaaab
-`define one_fifth 32'h3e4ccccd
-`define one_fourth 32'h3e800000
-`define one 32'h3f800000
+`define ONE_HALF 32'h3f000000
+`define ONE_THIRD 32'h3eaaaaab
+`define ONE_FOURTH 32'h3e800000
+`define ONE_FIFTH 32'h3e4ccccd
+`define ONE 32'h3f800000
 
-module ln_latency_core(input  clk, input [31:0] x, input  start, output [31:0] ln, output  done, output  error);
+module ln_latency_core(input  clk, input  rst_n, input [31:0] x, input  start, output [31:0] ln, output  done, output  error);
 
 wire [31:0] ln_36;
-wire  s12_17;
-reg  s12_18, s12_19, s12_20, s12_21, s12_22;
-wire  e4_10;
-wire  t5_20;
-reg  t5_21, t5_22, t5_23, t5_24, t5_25, t5_26, t5_27, t5_28, t5_29;
-wire  t2_10;
-wire  t3_15;
-wire  s34_22;
+wire [31:0] s12_17;
+reg [31:0] s12_18, s12_19, s12_20, s12_21, s12_22;
+wire [31:0] e4_10;
+wire [31:0] t5_20;
+reg [31:0] t5_21, t5_22, t5_23, t5_24, t5_25, t5_26, t5_27, t5_28, t5_29;
+wire [31:0] t2_10;
+wire [31:0] t3_15;
+wire [31:0] s34_22;
 wire  start_0;
 wire  done_0;
 reg  done_1, done_2, done_3, done_4, done_5, done_6, done_7, done_8, done_9, done_10, done_11, done_12, done_13, done_14, done_15, done_16, done_17, done_18, done_19, done_20, done_21, done_22, done_23, done_24, done_25, done_26, done_27, done_28, done_29, done_30, done_31, done_32, done_33, done_34, done_35, done_36;
-wire  s1234_29;
+wire [31:0] s1234_29;
 wire  error_0;
 reg  error_1, error_2, error_3, error_4, error_5, error_6, error_7, error_8, error_9, error_10, error_11, error_12, error_13, error_14, error_15, error_16, error_17, error_18, error_19, error_20, error_21, error_22, error_23, error_24, error_25, error_26, error_27, error_28, error_29, error_30, error_31, error_32, error_33, error_34, error_35, error_36;
-wire  e5_15;
+wire [31:0] e5_15;
 wire [31:0] x_0;
 reg [31:0] x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8, x_9, x_10;
-wire  x_abs_0;
-wire  t4_15;
-wire  e3_10;
-wire  e2_5;
+wire [31:0] x_abs_0;
+wire [31:0] t4_15;
+wire [31:0] e3_10;
+wire [31:0] e2_5;
 
 assign x_0 = x;
 assign start_0 = start;
@@ -39,19 +39,19 @@ assign error = error_36;
 
 assign done_0 = start_0;
 assign x_abs_0 = {1'b0, x_0[30:0]};
-assign error_0 = x_abs_0 > one;
-mult u3(clk, x_0, x_0, e2_5);
-mult u4(clk, e2_5, one_half, t2_10);
-mult u5(clk, e2_5, x_5, e3_10);
-mult u6(clk, e2_5, e2_5, e4_10);
-sub u7(clk, x_10, t2_10, s12_17);
-mult u8(clk, e4_10, x_10, e5_15);
-mult u9(clk, e3_10, one_third, t3_15);
-mult u10(clk, e4_10, one_fourth, t4_15);
-sub u11(clk, t3_15, t4_15, s34_22);
-mult u12(clk, e5_15, one_fifth, t5_20);
-add u13(clk, s12_22, s34_22, s1234_29);
-add u14(clk, s1234_29, t5_29, ln_36);
+assign error_0 = x_abs_0 > `ONE;
+mult5 u3(clk, x_0, x_0, e2_5);
+mult5 u4(clk, e2_5, `ONE_HALF, t2_10);
+mult5 u5(clk, e2_5, x_5, e3_10);
+mult5 u6(clk, e2_5, e2_5, e4_10);
+sub7 u7(clk, x_10, t2_10, s12_17);
+mult5 u8(clk, e4_10, x_10, e5_15);
+mult5 u9(clk, e3_10, `ONE_THIRD, t3_15);
+mult5 u10(clk, e4_10, `ONE_FOURTH, t4_15);
+sub7 u11(clk, t3_15, t4_15, s34_22);
+mult5 u12(clk, e5_15, `ONE_FIFTH, t5_20);
+add7 u13(clk, s12_22, s34_22, s1234_29);
+add7 u14(clk, s1234_29, t5_29, ln_36);
 
 always @(posedge clk) begin
 	if (~rst_n) begin

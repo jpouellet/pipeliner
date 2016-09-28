@@ -66,6 +66,8 @@ class Pipeline:
             self.port_widths[t[1]] = None
         elif t[0] == 'rst_n': # active-low synchronous reset
             self.rst_n = t[1]
+            self.ports.append(t[1])
+            self.port_widths[t[1]] = None
         elif t[0] == 'const': # constant
             # const   name   32'hdeadbeef
             if t[1] in self.consts:
@@ -84,12 +86,12 @@ class Pipeline:
             self.ports.append(t[1])
             self.port_widths[t[1]] = t[2] if len(t) >= 3 else None
         elif t[0] == 'def': # definition
-            # def   name   cycles   fmt %str
+            # def   name   cycles   fmt %str   outwidth
             if t[1] in self.ops:
                 raise Exception('duplicate definition: '+t[1])
             self.ops[t[1]] = Op(t[1], int(t[2]), t[3], t[4] if len(t) >= 5 else None)
         elif t[0] == 'inst': # instance
-            # inst   name   output   width    input1   input2 ...
+            # inst   name   output   input1   input2 ...
             if t[1] not in self.ops:
                 raise Exception('undefined op: '+inst.op)
             self.insts.append(Inst(self.ops[t[1]], t[2], t[3:]))
@@ -163,16 +165,16 @@ class Pipeline:
         return '\n'.join('%s %d:%d'%x for x in times)
 
     def graphviz(self):
-        nodes = ['\t"%s" [label="%s"]'%(c, '%s\n(%s)'%(c, self.consts[c])) for c in self.consts]
+        nodes = ['\t"%s" [label="%s"]'%(c, '`%s\n%s'%(c, self.consts[c])) for c in self.consts]
+        nodes += ['\t"%s output" [label="%s"]'%(output, output) for output in self.outputs]
         nodes += ['\t"%s" [label="%s"]'%(inst.output, '%s\n(%d-%d)'%(inst.op.name, inst.start, self.vals[inst.output].ready)) for inst in self.insts]
-        edges = []
-        for to in self.insts:
-            for f in to.inputs:
-                if f in self.consts:
-                    delay = 0
-                else:
-                    delay = to.start - self.vals[f].ready
-                edges.append('\t"%s" -> "%s"'%(f, to.output)+(' [label="%d-cycle\\ndelay", color=red]'%(delay) if delay else '')+';')
+        def delay(src, dst):
+            if src in self.consts:
+                return 0
+            return dst.start - self.vals[src].ready
+        intermediates = [(src, dst.output, delay(src, dst)) for dst in self.insts for src in dst.inputs]
+        outputs = [(out, out+' output', self.cycles - self.vals[out].ready) for out in self.outputs]
+        edges = ['\t"%s" -> "%s"'%(src, dst)+(' [label="%d-cycle\\ndelay", color=red]'%(delay) if delay else '')+';' for src,dst,delay in intermediates + outputs]
         return 'digraph {\n'+'\n'.join(nodes)+'\n'+'\n'.join(edges)+'\n}\n'
 
     def width(self, name):
@@ -219,7 +221,7 @@ class Pipeline:
         # instances
         insts = []
         for inst in self.insts:
-            input_a = [x if x in self.consts else '%s_%d'%(x, inst.start) for x in inst.inputs]
+            input_a = ['`%s'%(x) if x in self.consts else '%s_%d'%(x, inst.start) for x in inst.inputs]
             inputs = ', '.join(input_a)
             output = '%s_%d'%(inst.output, inst.start + inst.op.cycles)
             insts.append(inst.op.fmt.format(inst='u%d'%(len(insts)), output=output, inputs=inputs, input_a=input_a))
