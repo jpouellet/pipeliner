@@ -1,14 +1,16 @@
 digraph {
+	"ONE_FOURTH" [label="`ONE_FOURTH
+32'h3e800000"]
+	"ONE" [label="`ONE
+32'h3f800000"]
+	"ZERO" [label="`ZERO
+32'h0"]
+	"ONE_FIFTH" [label="`ONE_FIFTH
+32'h3e4ccccd"]
 	"ONE_HALF" [label="`ONE_HALF
 32'h3f000000"]
 	"ONE_THIRD" [label="`ONE_THIRD
 32'h3eaaaaab"]
-	"ONE_FOURTH" [label="`ONE_FOURTH
-32'h3e800000"]
-	"ONE_FIFTH" [label="`ONE_FIFTH
-32'h3e4ccccd"]
-	"ONE" [label="`ONE
-32'h3f800000"]
 	"ln output" [label="ln"]
 	"done output" [label="done"]
 	"error output" [label="error"]
@@ -40,8 +42,12 @@ digraph {
 (15-20)"]
 	"s1234" [label="+
 (22-29)"]
-	"ln" [label="+
+	"_ln" [label="+
 (29-36)"]
+	"exact0" [label="=
+(0-0)"]
+	"ln" [label="mux32
+(36-36)"]
 	"start" -> "done";
 	"x" -> "x_abs";
 	"x_abs" -> "error";
@@ -68,8 +74,13 @@ digraph {
 	"ONE_FIFTH" -> "t5";
 	"s12" -> "s1234" [label="5-cycle\ndelay", color=red];
 	"s34" -> "s1234";
-	"s1234" -> "ln";
-	"t5" -> "ln" [label="9-cycle\ndelay", color=red];
+	"s1234" -> "_ln";
+	"t5" -> "_ln" [label="9-cycle\ndelay", color=red];
+	"x" -> "exact0";
+	"ZERO" -> "exact0";
+	"exact0" -> "ln" [label="36-cycle\ndelay", color=red];
+	"ZERO" -> "ln";
+	"_ln" -> "ln";
 	"ln" -> "ln output";
 	"done" -> "done output" [label="36-cycle\ndelay", color=red];
 	"error" -> "error output" [label="36-cycle\ndelay", color=red];

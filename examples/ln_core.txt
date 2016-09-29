@@ -1,3 +1,4 @@
+const	ZERO	32'h0
 const	ONE	32'h3f800000
 const	ONE_HALF	32'h3f000000
 const	ONE_THIRD	32'h3eaaaaab
@@ -31,4 +32,9 @@ inst	*	t4	e4	ONE_FOURTH
 inst	-	s34	t3	t4
 inst	*	t5	e5	ONE_FIFTH
 inst	+	s1234	s12	s34
-inst	+	ln	s1234	t5
+inst	+	_ln	s1234	t5
+
+def	=	0	assign {output} = {input_a[0]} == {input_a[1]};
+def	mux32	0	assign {output} = {input_a[0]} ? {input_a[1]} : {input_a[2]};	[31:0]
+inst	=	exact0	x	ZERO
+inst	mux32	ln	exact0	ZERO	_ln
