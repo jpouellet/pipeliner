@@ -93,7 +93,7 @@ class Pipeline:
         elif t[0] == 'inst': # instance
             # inst   name   output   input1   input2 ...
             if t[1] not in self.ops:
-                raise Exception('undefined op: '+inst.op)
+                raise Exception('undefined op: '+t[1])
             self.insts.append(Inst(self.ops[t[1]], t[2], t[3:]))
         elif t[0] == 'inc': # include other file
             self.add_file(t[1])
