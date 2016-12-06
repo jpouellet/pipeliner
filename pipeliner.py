@@ -167,7 +167,7 @@ class Pipeline:
     def graphviz(self):
         nodes = ['\t"%s" [label="%s"]'%(c, '`%s\n%s'%(c, self.consts[c])) for c in self.consts]
         nodes += ['\t"%s output" [label="%s"]'%(output, output) for output in self.outputs]
-        nodes += ['\t"%s" [label="%s"]'%(inst.output, '%s\n(%d-%d)'%(inst.op.name, inst.start, self.vals[inst.output].ready)) for inst in self.insts]
+        nodes += ['\t"%s" [label="%s"]'%(inst.output, '%s\n%s\n(%d-%d)'%(inst.output, inst.op.name, inst.start, self.vals[inst.output].ready)) for inst in self.insts]
         def delay(src, dst):
             if src in self.consts:
                 return 0
