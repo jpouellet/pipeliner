@@ -226,7 +226,7 @@ class Pipeline:
             input_a = ['`%s'%(x) if x in self.consts else '%s_%d'%(x, inst.start) for x in inst.inputs]
             inputs = ', '.join(input_a)
             output = '%s_%d'%(inst.output, inst.start + inst.op.cycles)
-            insts.append(inst.op.fmt.format(inst='u%d'%(len(insts)), output=output, inputs=inputs, input_a=input_a))
+            insts.append(inst.op.fmt.format(inst='_%s_gen'%(output), output=output, inputs=inputs, input_a=input_a))
 
         # giant synchronous advancement
         advance = ['always @(posedge %s) begin'%(self.clock)]
