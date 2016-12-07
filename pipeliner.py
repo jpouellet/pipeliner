@@ -146,20 +146,16 @@ class Pipeline:
                 raise Exception('output conflict: '+inst.output)
             self.vals[inst.output] = Val(inst.output, inst.op.width)
 
-        # mark inputs & params as ready from beginning
+        # mark inputs as ready from beginning
         for name in self.inputs:
             if name in self.vals:
                 raise Exception('duplicate input: '+name)
             self.vals[name] = Val(name, self.port_widths[name], ready=0)
-        for name in self.params:
-            if name in self.vals:
-                raise Exception('duplicate param: '+name)
-            self.vals[name] = Val(name, None, ready=0)
 
         # expand {in}s for assignment expressions
         for inst in self.asses:
             op = inst.op
-            for val in self.vals: #.keys() + self.consts.keys() + self.params.keys():
+            for val in self.vals.keys() + self.consts.keys() + self.params.keys():
                 while True:
                     new = op.fmt.replace('{%s}'%val, '{input_a[%d]}'%len(inst.inputs), 1)
                     if new != op.fmt:
@@ -221,7 +217,7 @@ class Pipeline:
         nodes += ['\t"%s output" [label="%s"]'%(output, output) for output in self.outputs]
         nodes += ['\t"%s" [label="%s"]'%(inst.output, '%s\n%s\n(%d-%d)'%(inst.output, inst.op.name, inst.start, self.vals[inst.output].ready)) for inst in self.insts]
         def delay(src, dst):
-            if src in self.consts:
+            if src in self.consts or src in self.params:
                 return 0
             return dst.start - self.vals[src].ready
         intermediates = [(src, dst.output, delay(src, dst)) for dst in self.insts for src in dst.inputs]
