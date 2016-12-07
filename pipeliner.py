@@ -31,6 +31,7 @@ class Pipeline:
     name = None
     clock = None
     rst_n = None
+    en = None
     ops = {}
     inputs = []
     outputs = []
@@ -62,6 +63,10 @@ class Pipeline:
             if self.clock is not None:
                 raise Exception('2nd clock: '+t[1])
             self.clock = t[1]
+            self.ports.append(t[1])
+            self.port_widths[t[1]] = None
+        elif t[0] == 'en': # clock enable
+            self.en = t[1]
             self.ports.append(t[1])
             self.port_widths[t[1]] = None
         elif t[0] == 'rst_n': # active-low synchronous reset
@@ -230,13 +235,32 @@ class Pipeline:
 
         # giant synchronous advancement
         advance = ['always @(posedge %s) begin'%(self.clock)]
+
+        # if reset asserted
         if self.rst_n is not None:
             advance.append('\tif (~%s) begin'%self.rst_n)
+            # do reset
             for bumps in filter(lambda x: x, allbumps):
                 advance.append('\t\t'+' '.join('%s <= 0;'%(x[0]) for x in bumps))
             advance.append('\tend else begin')
+
+        # if enable not asserted
+        if self.en is not None:
+            advance.append('\t\tif (~%s) begin'%self.en)
+            # do reset
+            for bumps in filter(lambda x: x, allbumps):
+                advance.append('\t\t\t'+' '.join('%s <= %s;'%(x[0], x[0]) for x in bumps))
+            advance.append('\t\tend else begin')
+
+        # advance
         for bumps in filter(lambda x: x, allbumps):
-            advance.append('\t\t'+' '.join('%s <= %s;'%x for x in bumps))
+            advance.append('\t\t\t'+' '.join('%s <= %s;'%x for x in bumps))
+
+        # end enable
+        if self.en is not None:
+            advance.append('\t\tend')
+
+        # end reset
         if self.rst_n is not None:
             advance.append('\tend')
         advance.append('end')
