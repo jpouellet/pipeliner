@@ -118,7 +118,8 @@ class Pipeline:
             outwidth = t[3] if len(t) >= 4 else None
             if seq:
                 # XXX uses current value of self self.rst_n, self.en rather than value at output-producing time
-                fmtstr = ('always @(posedge clk) {output} <= (%s);'%(
+                fmtstr = ('reg _{output}_reg; assign {output} = _{output}_reg;\n'
+                    'always @(posedge clk) _{output}_reg <= (%s);'%(
                     ('~%s ? 0 : (%%s)'%(self.rst_n) if self.rst_n else '%s')%(
                         '~%s ? {output} : %%s'%(self.en) if self.en else '%s')))%expr
             else:
