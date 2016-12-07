@@ -91,7 +91,7 @@ class Pipeline:
             self.ports.append(t[1])
             self.port_widths[t[1]] = t[2] if len(t) >= 3 else None
         elif t[0] == 'def': # definition
-            # def   name   cycles   fmt %str   outwidth
+            # def   name   cycles   fmt %str   [outwidth]
             if t[1] in self.ops:
                 raise Exception('duplicate definition: '+t[1])
             self.ops[t[1]] = Op(t[1], int(t[2]), t[3], t[4] if len(t) >= 5 else None)
