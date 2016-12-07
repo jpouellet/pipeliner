@@ -182,9 +182,13 @@ class Pipeline:
         self.cycles = max(self.vals[output].ready for output in self.outputs)
 
         # outputs lastused at end
+        for out in self.outputs:
+            self.vals[out].lastused = self.cycles
+
+        # no unused outputs
         for val in self.vals.itervalues():
             if val.lastused is None:
-                val.lastused = self.cycles
+                raise Exception('unused output value: '+val.name)
 
     def lifetimes(self):
         times = [(val.name, val.ready, val.lastused) for val in self.vals.itervalues()]
