@@ -37,6 +37,7 @@ class Pipeline:
     outputs = []
     vals = {}
     consts = {}
+    params = {}
     insts = []
     asses = []
     ports = []
@@ -79,6 +80,11 @@ class Pipeline:
             if t[1] in self.consts:
                 raise Exception('duplicate constant: '+t[1])
             self.consts[t[1]] = t[2]
+        elif t[0] == 'param': # parameter
+            # param   name   default
+            if t[1] in self.params:
+                raise Exception('duplicate parameter: '+t[1])
+            self.params[t[1]] = t[2] if len(t) >= 3 else None
         elif t[0] == 'in': # inputs
             if t[1] in self.ports:
                 raise Exception('duplicate port: '+t[1])
@@ -134,18 +140,21 @@ class Pipeline:
         if self.clock is None:
             raise Exception('module has no clock')
 
-        # mark inputs as ready from beginning
-        for name in self.inputs:
-            if name in self.vals:
-                raise Exception('duplicate input: '+name)
-            self.vals[name] = Val(name, self.port_widths[name], ready=0)
-            #print 'input %s, ready at %s'%(name, repr(self.vals[name].ready))
-
         # enumerate op result vals
         for inst in self.insts:
             if inst.output in self.vals:
                 raise Exception('output conflict: '+inst.output)
             self.vals[inst.output] = Val(inst.output, inst.op.width)
+
+        # mark inputs & params as ready from beginning
+        for name in self.inputs:
+            if name in self.vals:
+                raise Exception('duplicate input: '+name)
+            self.vals[name] = Val(name, self.port_widths[name], ready=0)
+        for name in self.params:
+            if name in self.vals:
+                raise Exception('duplicate param: '+name)
+            self.vals[name] = Val(name, None, ready=0)
 
         # expand {in}s for assignment expressions
         for inst in self.asses:
@@ -162,7 +171,7 @@ class Pipeline:
         # ensure all op inputs exist
         for inst in self.insts:
             for INP in inst.inputs:
-                if INP not in self.vals.keys() + self.consts.keys():
+                if INP not in self.vals.keys() + self.consts.keys() + self.params.keys():
                     raise Exception('undefined intermediate: '+INP)
 
         # ensure all outputs exist
@@ -182,7 +191,7 @@ class Pipeline:
         while toplace:
             #print '%d left to place'%(len(toplace))
             for inst in toplace:
-                readies = [0 if INP in self.consts else self.vals[INP].ready for INP in inst.inputs]
+                readies = [0 if INP in self.consts or INP in self.params else self.vals[INP].ready for INP in inst.inputs]
                 #print '%s has %s ready for %s'%(inst.output, repr(readies), repr(inst.inputs))
                 if None not in readies:
                     toplace.remove(inst)
@@ -240,7 +249,9 @@ class Pipeline:
         # module with ports
         # defaulting to 'input' because clk is not in inputs to avoid it becoming a valid input
         ports = ['%s %s %s'%('output' if x in self.outputs else 'input', self.width(x), x) for x in self.ports]
-        module = 'module %s('%(self.name)+', '.join(ports)+');'
+        module = 'module %s (\n\t%s);'%(self.name, ',\n\t'.join(ports))
+
+        params = ['\tparameter '+kv[0]+(' = '+kv[1] if kv[1] is not None else '')+';' for kv in self.params.items()]
 
         # pipeline registers
         vals = []
@@ -266,7 +277,7 @@ class Pipeline:
         # instances
         insts = []
         for inst in self.insts:
-            input_a = ['`%s'%(x) if x in self.consts else '%s_%d'%(x, inst.start) for x in inst.inputs]
+            input_a = ['`%s'%(x) if x in self.consts else x if x in self.params else '%s_%d'%(x, inst.start) for x in inst.inputs]
             inputs = ', '.join(input_a)
             output = '%s_%d'%(inst.output, inst.start + inst.op.cycles)
             insts.append(inst.op.fmt.format(inst='_%s_gen'%(output), output=output, inputs=inputs, input_a=input_a))
@@ -303,7 +314,7 @@ class Pipeline:
             advance.append('\tend')
         advance.append('end')
 
-        return '\n\n'.join(['\n'.join(x) for x in [[info], consts, [module], vals, assigns, insts, advance, ['endmodule','']]])
+        return '\n\n'.join(['\n'.join(x) for x in [[info], consts, [module], params, vals, assigns, insts, advance, ['endmodule','']]])
 
 def usage():
     sys.stderr.write('Usage: %s pipeline_description_file [lifetimes|graphviz|verilog]\n'%(sys.argv[0]))
