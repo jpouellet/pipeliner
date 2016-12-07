@@ -38,6 +38,7 @@ class Pipeline:
     vals = {}
     consts = {}
     insts = []
+    asses = []
     ports = []
     port_widths = {}
 
@@ -101,16 +102,14 @@ class Pipeline:
                 raise Exception('undefined op: '+t[1])
             self.insts.append(Inst(self.ops[t[1]], t[2], t[3:]))
         elif t[0] == 'seqass' or t[0] == 'assign': # (sequential) assignment
-            # seqass  out  in expr  input1,input1,...,inputN  [outwidth]
+            # seqass   out   ({in} expr)  [outwidth]
             seq = t[0] == 'seqass'
             output = t[1]
             expr = t[2]
-            op_name = 'seq: %s'%(expr)
+            op_name = '%s: %s <= %s'%('@clk' if seq else 'comb', output, expr)
             if op_name in self.ops:
                 raise Exception('name collision for op: '+op_name)
-            inputs = [x for x in t[3].split(',') if x]
-            # XXX should that all inputs are in expr, and later that no other inputs appear in expr
-            outwidth = t[4] if len(t) >= 5 else None
+            outwidth = t[3] if len(t) >= 4 else None
             if seq:
                 # XXX uses current value of self self.rst_n, self.en rather than value at output-producing time
                 fmtstr = ('always @(posedge clk) {output} <= (%s);'%(
@@ -120,7 +119,9 @@ class Pipeline:
                 fmtstr = 'assign {output} = (%s);'%expr
             op = Op(op_name, 1 if seq else 0, fmtstr, outwidth)
             self.ops[op_name] = op
-            self.insts.append(Inst(op, output, inputs))
+            inst = Inst(op, output, []) # inputs get expanded later
+            self.insts.append(inst)
+            self.asses.append(inst)
         elif t[0] == 'inc': # include other file
             self.add_file(t[1])
         else:
@@ -145,6 +146,18 @@ class Pipeline:
             if inst.output in self.vals:
                 raise Exception('output conflict: '+inst.output)
             self.vals[inst.output] = Val(inst.output, inst.op.width)
+
+        # expand {in}s for assignment expressions
+        for inst in self.asses:
+            op = inst.op
+            for val in self.vals: #.keys() + self.consts.keys() + self.params.keys():
+                while True:
+                    new = op.fmt.replace('{%s}'%val, '{input_a[%d]}'%len(inst.inputs), 1)
+                    if new != op.fmt:
+                        inst.inputs.append(val)
+                        op.fmt = new
+                    else:
+                        break
 
         # ensure all op inputs exist
         for inst in self.insts:
