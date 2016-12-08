@@ -248,7 +248,8 @@ class Pipeline:
         ports = ['%s %s %s'%('output' if x in self.outputs else 'input', self.width(x), x) for x in self.ports]
         module = 'module %s (\n\t%s);'%(self.name, ',\n\t'.join(ports))
 
-        params = ['\tparameter '+kv[0]+(' = '+kv[1] if kv[1] is not None else '')+';' for kv in self.params.items()]
+        # parameters
+        params = ['\tparameter '+kv[0]+(' = '+kv[1] if kv[1] is not None else '')+';' for kv in self.params.items() + [('__PIPELINE_DEPTH__', str(self.cycles))]]
 
         # pipeline registers
         vals = []
