@@ -251,6 +251,9 @@ class Pipeline:
         # parameters
         params = ['\tparameter '+kv[0]+(' = '+kv[1] if kv[1] is not None else '')+';' for kv in self.params.items() + [('__PIPELINE_DEPTH__', str(self.cycles))]]
 
+        # info localparams
+        info = ['\tlocalparam __PIPELINE_DEPTH = %d;'%self.cycles]
+
         # pipeline registers
         vals = []
         allbumps = []
@@ -312,7 +315,7 @@ class Pipeline:
             advance.append('\tend')
         advance.append('end')
 
-        return '\n\n'.join(['\n'.join(x) for x in [[info], consts, [module], params, vals, assigns, insts, advance, ['endmodule','']]])
+        return '\n\n'.join(['\n'.join(x) for x in [[info], consts, [module], params, info, vals, assigns, insts, advance, ['endmodule','']]])
 
 def usage():
     sys.stderr.write('Usage: %s pipeline_description_file [lifetimes|graphviz|verilog]\n'%(sys.argv[0]))
